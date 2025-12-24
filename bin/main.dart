@@ -4,6 +4,8 @@ import 'package:shelf/shelf_io.dart';
 import 'routes.dart';
 
 Future<void> main() async {
+  // TODO: Add logger
+
   final handler = Pipeline()
       .addMiddleware(logRequests())
       .addHandler(router.call);
