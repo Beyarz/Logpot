@@ -55,9 +55,7 @@ class Log {
   void _startListener() {
     _logger.onRecord.listen((record) {
       final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(record.time);
-      final formatted = '[${record.level.name}] $timestamp ${record.message}';
-
-      _fanOut.add(formatted);
+      _fanOut.add('[${record.level.name}] $timestamp ${record.message}');
     });
   }
 
