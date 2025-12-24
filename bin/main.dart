@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
+import 'package:logging/logging.dart';
 import 'routes.dart';
+import 'logger.dart';
 
 Future<void> main() async {
-  // TODO: Add logger
+  Logger log = Log("Global").getInstance;
 
   final handler = Pipeline()
       .addMiddleware(logRequests())
@@ -17,7 +19,9 @@ Future<void> main() async {
   final serverv4 = await serve(handler, ipv4, port);
   final serverv6 = await serve(handler, ipv6, port);
 
-  print("""Server listening on:
+  log.info("""
+  \nServer listening on:
   http://${serverv4.address.address}:${serverv4.port}
-  http://${serverv6.address.address}:${serverv6.port}""");
+  http://${serverv6.address.address}:${serverv6.port}
+""");
 }
