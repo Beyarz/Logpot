@@ -29,10 +29,32 @@ Future<void> main() async {
       .addMiddleware(
         (innerHandler) => (request) {
           if (request.requestedUri.path != '/') {
-            log.info('${request.method} ${request.requestedUri.path}');
+            log.info(
+              '${request.method} ${request.requestedUri.path} | User-Agent: ${request.headers['user-agent'] ?? 'none'} | Referer: ${request.headers['referer'] ?? 'none'} | Accept: ${request.headers['accept'] ?? 'none'}',
+            );
           }
 
           return innerHandler(request);
+        },
+      )
+      .addMiddleware(
+        (innerHandler) => (request) async {
+          final response = await innerHandler(request);
+          return response.change(
+            headers: {
+              'Server': 'Apache/2.4.41 (Ubuntu)',
+              'X-Powered-By': 'PHP/7.4.16',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'ETag': '"${DateTime.now().millisecondsSinceEpoch}"',
+              'Last-Modified': HttpDate.format(DateTime.now()),
+              'X-Frame-Options': 'DENY',
+              'X-Content-Type-Options': 'nosniff',
+              'Strict-Transport-Security':
+                  'max-age=31536000; includeSubDomains',
+              'X-Custom-Analytics': request.headers['User-Agent'] ?? 'unknown',
+            },
+          );
         },
       )
       .addHandler(routeHandler.router.call);

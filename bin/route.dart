@@ -17,7 +17,13 @@ class RouteHandler {
         Router()
           ..get('/', _homeHandler)
           ..get('/healthcheck', _healthcheckHandler)
-          ..get('/robots.txt', (Request req) => Response.ok(_cacheRobotsTxt))
+          ..get(
+            '/robots.txt',
+            (Request req) => Response.ok(
+              _cacheRobotsTxt,
+              headers: {'Cache-Control': 'public, max-age=3600'},
+            ),
+          )
           ..get('/<catchAll|.*>', _catchAllHandler);
   }
 
