@@ -24,8 +24,7 @@ Future<void> main() async {
   loggerConfig.addOutput(persistence.log);
   loggerConfig.addErrorOutput(errorPersistence.log);
 
-  initRobotsCache();
-
+  final routeHandler = RouteHandler();
   final Handler handler = Pipeline()
       .addMiddleware(
         (innerHandler) => (request) {
@@ -36,7 +35,7 @@ Future<void> main() async {
           return innerHandler(request);
         },
       )
-      .addHandler(router.call);
+      .addHandler(routeHandler.router.call);
 
   final InternetAddress ipv4 = InternetAddress.anyIPv4;
   final InternetAddress ipv6 = InternetAddress.anyIPv6;

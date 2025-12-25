@@ -5,23 +5,32 @@ import 'package:shelf_router/shelf_router.dart';
 
 import 'main.dart';
 
-const String robotsTxtFile = 'robots.txt';
-late final String cacheRobotsTxt;
+class RouteHandler {
+  final String robotsTxtFile = 'robots.txt';
+  late final String _cacheRobotsTxt;
+  late final Router _router;
 
-final router =
-    Router()
-      ..get('/', _homeHandler)
-      ..get('/robots.txt', (Request req) => Response.ok(cacheRobotsTxt))
-      ..get('/<catchAll|.*>', _catchAllHandler);
+  RouteHandler() {
+    _initRobotsCache();
 
-Response _homeHandler(Request req) {
-  return Response.ok(File(logFileName).readAsStringSync());
-}
+    _router =
+        Router()
+          ..get('/', _homeHandler)
+          ..get('/robots.txt', (Request req) => Response.ok(_cacheRobotsTxt))
+          ..get('/<catchAll|.*>', _catchAllHandler);
+  }
 
-Response _catchAllHandler(Request req) {
-  return Response.ok('You are on page: ${req.requestedUri.path}');
-}
+  Router get router => _router;
 
-void initRobotsCache() {
-  cacheRobotsTxt = File(robotsTxtFile).readAsStringSync();
+  Response _homeHandler(Request req) {
+    return Response.ok(File(logFileName).readAsStringSync());
+  }
+
+  Response _catchAllHandler(Request req) {
+    return Response.ok('You are on page: ${req.requestedUri.path}');
+  }
+
+  void _initRobotsCache() {
+    _cacheRobotsTxt = File(robotsTxtFile).readAsStringSync();
+  }
 }
