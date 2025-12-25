@@ -16,6 +16,7 @@ class RouteHandler {
     _router =
         Router()
           ..get('/', _homeHandler)
+          ..get('/healthcheck', _healthcheckHandler)
           ..get('/robots.txt', (Request req) => Response.ok(_cacheRobotsTxt))
           ..get('/<catchAll|.*>', _catchAllHandler);
   }
@@ -24,6 +25,10 @@ class RouteHandler {
 
   Response _homeHandler(Request req) {
     return Response.ok(File(logFileName).readAsStringSync());
+  }
+
+  Response _healthcheckHandler(Request req) {
+    return Response.ok('Healthy');
   }
 
   Response _catchAllHandler(Request req) {

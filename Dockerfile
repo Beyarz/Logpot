@@ -1,6 +1,7 @@
 FROM dart:stable AS build
 
 WORKDIR /app
+COPY robots.txt ./
 COPY pubspec.* ./
 RUN dart pub get
 
@@ -11,5 +12,6 @@ FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /app/build/main /app/bin/
 
-EXPOSE 1234
-CMD ["PORT=1234", "/app/bin/server"]
+ENV PORT=8080
+EXPOSE ${PORT}
+CMD ["/app/bin/main"]
