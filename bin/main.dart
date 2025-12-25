@@ -30,7 +30,7 @@ Future<void> main() async {
         (innerHandler) => (request) {
           if (request.requestedUri.path != '/') {
             log.info(
-              '${request.method} ${request.requestedUri.path} | User-Agent: ${request.headers['user-agent'] ?? 'none'} | Referer: ${request.headers['referer'] ?? 'none'} | Accept: ${request.headers['accept'] ?? 'none'}\n',
+              '${request.method},${request.requestedUri.path},${request.headers['user-agent'] ?? 'none'}',
             );
           }
 

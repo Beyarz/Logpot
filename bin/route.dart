@@ -30,7 +30,11 @@ class RouteHandler {
   Router get router => _router;
 
   Response _homeHandler(Request req) {
-    return Response.ok(File(logFileName).readAsStringSync());
+    return Response.ok(
+      'People and bots have visited following pages:\n\n' +
+          'Level,DateTime,Method,Path,User-agent\n' +
+          File(logFileName).readAsStringSync()
+    );
   }
 
   Response _healthcheckHandler(Request req) {
@@ -38,7 +42,7 @@ class RouteHandler {
   }
 
   Response _catchAllHandler(Request req) {
-    return Response.ok('You are on page: ${req.requestedUri.path}');
+    return Response.ok('Nothing to see here');
   }
 
   void _initRobotsCache() {
