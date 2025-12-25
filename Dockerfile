@@ -12,6 +12,6 @@ FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /app/build/main /app/bin/
 
-ENV PORT=8080
+ENV PORT=8081
 EXPOSE ${PORT}
 CMD ["/app/bin/main"]
