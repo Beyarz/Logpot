@@ -37,13 +37,19 @@ Future<void> main() async {
       )
       .addHandler(routeHandler.router.call);
 
-  final InternetAddress ipv4 = InternetAddress.anyIPv4;
-  final InternetAddress ipv6 = InternetAddress.anyIPv6;
-
   final int port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final HttpServer serverv4 = await serve(handler, ipv4, port)
+  final HttpServer serverv4 = await serve(
+      handler,
+      InternetAddress.anyIPv4,
+      port,
+    )
     ..autoCompress = true;
-  final HttpServer serverv6 = await serve(handler, ipv6, port)
+
+  final HttpServer serverv6 = await serve(
+      handler,
+      InternetAddress.anyIPv6,
+      port,
+    )
     ..autoCompress = true;
 
   registerSignalHandler(() async {
