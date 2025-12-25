@@ -1,5 +1,5 @@
 name: logpot
-description: ""
+description: "Webserver logging incoming request and displaying it for analytical purposes"
 version: 1.0.0
 
 environment:
