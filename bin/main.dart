@@ -1,50 +1,62 @@
 import 'dart:io';
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:logging/logging.dart';
-import 'routes.dart';
+
+import 'route.dart';
 import 'log.dart';
 import 'persistence.dart';
 
-const logFileName = 'logpot-logs.txt';
-const errorLogFileName = 'logpot-errors.txt';
+const logFileName = 'request-logs.txt';
+const errorLogFileName = 'error-logs.txt';
 const exitSuccess = 0;
 
 Future<void> main() async {
-  final logWrapper = Log("Global");
-  final Logger log = logWrapper.logger;
+  final Log loggerConfig = Log("Global");
+  final Logger log = loggerConfig.logger;
 
-  final persistence = await Persistence.createFile(logFileName);
-  final errorPersistence = await Persistence.createFile(errorLogFileName);
+  final Persistence persistence = await Persistence.createFile(logFileName);
+  final Persistence errorPersistence = await Persistence.createFile(
+    errorLogFileName,
+  );
 
-  logWrapper.addOutput(persistence.log);
-  logWrapper.addErrorOutput(errorPersistence.log);
+  loggerConfig.addOutput(persistence.log);
+  loggerConfig.addErrorOutput(errorPersistence.log);
 
-  final handler = Pipeline().addHandler((request) {
-    if (request.requestedUri.path != '/') {
-      log.info('${request.method} ${request.requestedUri.path}');
-    }
+  initRobotsCache();
 
-    return router.call(request);
-  });
+  final Handler handler = Pipeline()
+      .addMiddleware(
+        (innerHandler) => (request) {
+          if (request.requestedUri.path != '/') {
+            log.info('${request.method} ${request.requestedUri.path}');
+          }
 
-  final ipv4 = InternetAddress.anyIPv4;
-  final ipv6 = InternetAddress.anyIPv6;
+          return innerHandler(request);
+        },
+      )
+      .addHandler(router.call);
 
-  final port = int.parse(Platform.environment['PORT'] ?? '8080');
-  final serverv4 = await serve(handler, ipv4, port);
-  final serverv6 = await serve(handler, ipv6, port);
+  final InternetAddress ipv4 = InternetAddress.anyIPv4;
+  final InternetAddress ipv6 = InternetAddress.anyIPv6;
+
+  final int port = int.parse(Platform.environment['PORT'] ?? '8080');
+  final HttpServer serverv4 = await serve(handler, ipv4, port)
+    ..autoCompress = true;
+  final HttpServer serverv6 = await serve(handler, ipv6, port)
+    ..autoCompress = true;
 
   registerSignalHandler(() async {
-    log.info('Shutting down...');
+    print('Shutting down...');
     await serverv4.close(force: true);
     await serverv6.close(force: true);
-    await logWrapper.dispose();
+    await loggerConfig.dispose();
     await persistence.close();
     await errorPersistence.close();
   });
 
-  log.info("""
+  print("""
   \nServer listening on:
   http://${serverv4.address.address}:${serverv4.port}
   http://${serverv6.address.address}:${serverv6.port}

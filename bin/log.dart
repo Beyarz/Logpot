@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:logging/logging.dart';
 import 'package:intl/intl.dart';
 
@@ -15,12 +16,12 @@ class Log {
     _startListener();
   }
 
-  void addOutput(LogOutput output) {
+  void addOutput(LogOutput subscriber) {
     late final StreamSubscription<String> subscription;
 
     subscription = _fanOut.stream.listen((msg) async {
       try {
-        await output(msg);
+        await subscriber(msg);
       } catch (err, stack) {
         // Remove the broken sink
         await subscription.cancel();
@@ -29,16 +30,16 @@ class Log {
           'yyyy-MM-dd HH:mm:ss',
         ).format(DateTime.now());
 
-        final failureReport =
-            '''[$timestamp] Log output ${output.runtimeType} failed\nERROR: $err\nSTACK: $stack''';
+        final errorLog =
+            '[$timestamp] Log ${subscriber.runtimeType} failed\nERROR: $err\nSTACK: $stack';
 
-        await _emitError(failureReport);
+        await _emitError(errorLog);
       }
     });
   }
 
-  void addErrorOutput(LogOutput output) {
-    _errorOutputs.add(output);
+  void addErrorOutput(LogOutput subscriber) {
+    _errorOutputs.add(subscriber);
   }
 
   Future<void> _emitError(String message) async {
@@ -47,7 +48,7 @@ class Log {
         await sink(message);
       } catch (_) {
         // Nothing else I can do
-        // I want to avoid infinite recursion
+        // I just want to avoid infinite recursion
       }
     }
   }
