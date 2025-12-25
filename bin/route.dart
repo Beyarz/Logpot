@@ -6,7 +6,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'main.dart';
 
 class RouteHandler {
-  final String robotsTxtFile = 'robots.txt';
+  final String _robotsTxtFile = 'robots.txt';
   late final String _cacheRobotsTxt;
   late final Router _router;
 
@@ -31,6 +31,6 @@ class RouteHandler {
   }
 
   void _initRobotsCache() {
-    _cacheRobotsTxt = File(robotsTxtFile).readAsStringSync();
+    _cacheRobotsTxt = File(_robotsTxtFile).readAsStringSync();
   }
 }
