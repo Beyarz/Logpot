@@ -74,19 +74,15 @@ Future<void> main() async {
 
   final int port = int.parse(Platform.environment['PORT'] ?? '8081');
 
-  final HttpServer serverv4 = await serve(
-      handler,
-      InternetAddress.anyIPv4,
-      port,
-    )
-    ..autoCompress = true;
+  final HttpServer serverv4 =
+      await serve(handler, InternetAddress.anyIPv4, port)
+        ..autoCompress = true
+        ..idleTimeout = const Duration(seconds: 10);
 
-  final HttpServer serverv6 = await serve(
-      handler,
-      InternetAddress.anyIPv6,
-      port,
-    )
-    ..autoCompress = true;
+  final HttpServer serverv6 =
+      await serve(handler, InternetAddress.anyIPv6, port)
+        ..autoCompress = true
+        ..idleTimeout = const Duration(seconds: 10);
 
   registerSignalHandler(() async {
     print('Shutting down...');
