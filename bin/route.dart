@@ -129,6 +129,12 @@ class RouteHandler {
   }
 
   Future<void> _initRobotsCache() async {
-    _cacheRobotsTxt = await File(_robotsTxtFile).readAsString();
+    try {
+      _cacheRobotsTxt = await File(_robotsTxtFile).readAsString();
+    } catch (e) {
+      throw FileSystemException(
+        'File "robots.txt" not found. Have to be in same directory.',
+      );
+    }
   }
 }
