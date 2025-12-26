@@ -42,7 +42,12 @@ Future<void> main() async {
           if (request.requestedUri.path != '/') {
             final method = Uri.encodeComponent(request.method);
             final path = Uri.encodeComponent(request.requestedUri.path);
-            log.info('$method,$path');
+
+            if (request.requestedUri.path == '/private') {
+              log.warning('$method,$path');
+            } else {
+              log.info('$method,$path');
+            }
           }
 
           return innerHandler(request);
