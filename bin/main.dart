@@ -30,18 +30,8 @@ Future<void> main() async {
   final routeHandler = RouteHandler();
   await routeHandler.init();
 
-  final rateLimiter = shelfLimiterByEndpoint(
-    endpointLimits: {
-      '/': RateLimiterOptions(
-        maxRequests: 30,
-        windowSize: const Duration(minutes: 1),
-      ),
-      '/healthcheck': RateLimiterOptions(
-        maxRequests: 60,
-        windowSize: const Duration(minutes: 1),
-      ),
-    },
-    defaultOptions: RateLimiterOptions(
+  final rateLimiter = shelfLimiter(
+    RateLimiterOptions(
       maxRequests: 100,
       windowSize: const Duration(minutes: 1),
     ),
