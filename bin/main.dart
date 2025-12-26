@@ -31,10 +31,7 @@ Future<void> main() async {
   await routeHandler.init();
 
   final rateLimiter = shelfLimiter(
-    RateLimiterOptions(
-      maxRequests: 100,
-      windowSize: const Duration(minutes: 1),
-    ),
+    RateLimiterOptions(maxRequests: 25, windowSize: const Duration(minutes: 1)),
   );
 
   final Handler handler = Pipeline()
