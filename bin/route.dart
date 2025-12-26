@@ -30,11 +30,11 @@ class RouteHandler {
   Router get router => _router;
 
   Response _homeHandler(Request req) {
-    return Response.ok(
-      'People and bots have visited following pages:\n\n' +
-          'Level,DateTime,Method,Path,User-agent\n' +
-          File(logFileName).readAsStringSync()
-    );
+    return Response.ok('''
+      People and bots have visited following pages:\n\n
+          Level,DateTime,Method,Path\n
+          ${File(logFileName).readAsStringSync()}
+    ''');
   }
 
   Response _healthcheckHandler(Request req) {

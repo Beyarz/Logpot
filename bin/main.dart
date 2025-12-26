@@ -29,9 +29,7 @@ Future<void> main() async {
       .addMiddleware(
         (innerHandler) => (request) {
           if (request.requestedUri.path != '/') {
-            log.info(
-              '${request.method},${request.requestedUri.path},${request.headers['user-agent'] ?? 'none'}',
-            );
+            log.info('${request.method},${request.requestedUri.path}');
           }
 
           return innerHandler(request);
@@ -52,7 +50,6 @@ Future<void> main() async {
               'X-Content-Type-Options': 'nosniff',
               'Strict-Transport-Security':
                   'max-age=31536000; includeSubDomains',
-              'X-Custom-Analytics': request.headers['User-Agent'] ?? 'unknown',
             },
           );
         },
