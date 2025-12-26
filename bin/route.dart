@@ -18,6 +18,7 @@ class RouteHandler {
 
   String? _cachedHomePage;
   DateTime? _cacheTime;
+  bool _isRefreshingCache = false;
 
   Future<void> init() async {
     await _initRobotsCache();
@@ -48,48 +49,63 @@ class RouteHandler {
       );
     }
 
-    final logTail = await _readLogTail();
-
-    final buffer =
-        StringBuffer()
-          ..writeln('People and bots have visited following pages:\n')
-          ..writeln('Level,DateTime,Method,Path');
-
-    for (final line in logTail.split('\n')) {
-      if (line.isEmpty) continue;
-
-      final parts = line.split(',');
-
-      if (parts.length >= 4) {
-        String method = parts[2];
-        String path = parts[3];
-
-        try {
-          method = Uri.decodeComponent(method);
-        } catch (_) {
-          // Keep encoded if decoding fails
-        }
-
-        try {
-          path = Uri.decodeComponent(path);
-        } catch (_) {
-          // Keep encoded if decoding fails
-        }
-
-        final decoded = '${parts[0]},${parts[1]},$method,$path';
-        buffer.writeln(decoded);
-      } else {
-        buffer.writeln(line);
-      }
+    // If another request is already refreshing
+    // return stale cache or empty
+    if (_isRefreshingCache) {
+      return Response.ok(
+        _cachedHomePage ?? 'Loading...',
+        headers: {'Cache-Control': 'no-store'},
+      );
     }
 
-    _cachedHomePage = buffer.toString();
-    _cacheTime = DateTime.now();
+    _isRefreshingCache = true;
 
-    return Response.ok(
-      _cachedHomePage!,
-      headers: {'Cache-Control': 'no-store'},
-    );
+    try {
+      final logTail = await _readLogTail();
+
+      final buffer =
+          StringBuffer()
+            ..writeln('People and bots have visited following pages:\n')
+            ..writeln('Level,DateTime,Method,Path');
+
+      for (final line in logTail.split('\n')) {
+        if (line.isEmpty) continue;
+
+        final parts = line.split(',');
+
+        if (parts.length >= 4) {
+          String method = parts[2];
+          String path = parts[3];
+
+          try {
+            method = Uri.decodeComponent(method);
+          } catch (_) {
+            // Keep encoded if decoding fails
+          }
+
+          try {
+            path = Uri.decodeComponent(path);
+          } catch (_) {
+            // Keep encoded if decoding fails
+          }
+
+          final decoded = '${parts[0]},${parts[1]},$method,$path';
+          buffer.writeln(decoded);
+        } else {
+          buffer.writeln(line);
+        }
+      }
+
+      _cachedHomePage = buffer.toString();
+      _cacheTime = DateTime.now();
+
+      return Response.ok(
+        _cachedHomePage!,
+        headers: {'Cache-Control': 'no-store'},
+      );
+    } finally {
+      _isRefreshingCache = false;
+    }
   }
 
   Future<String> _readLogTail({int maxLines = _maxLinesToRead}) async {
