@@ -7,7 +7,9 @@ import 'package:shelf_router/shelf_router.dart';
 import 'main.dart';
 
 class RouteHandler {
-  static const int _logTailBytes = 64 * 1024 * 1024; // 64MB
+  static const int _maxLinesToRead = 50;
+  static const int _chunkSize = 16 * 1024; // 16KB per iter
+  static const int _maxBytes = 256 * 1024; // cap total work 256KB
 
   final String _robotsTxtFile = 'robots.txt';
   late final String _cacheRobotsTxt;
@@ -47,22 +49,32 @@ class RouteHandler {
     );
   }
 
-  Future<String> _readLogTail({int maxLines = 50}) async {
+  Future<String> _readLogTail({int maxLines = _maxLinesToRead}) async {
     final file = File(logFileName);
-    if (!await file.exists()) {
-      return '';
+    if (!await file.exists()) return '';
+
+    final raf = await file.open();
+    try {
+      final List<int> buffer = [];
+      int position = await raf.length();
+
+      while (position > 0 && buffer.length < _maxBytes) {
+        final readSize = position >= _chunkSize ? _chunkSize : position;
+        position -= readSize;
+
+        await raf.setPosition(position);
+        buffer.insertAll(0, await raf.read(readSize));
+
+        final lines = const LineSplitter().convert(utf8.decode(buffer));
+        if (lines.length > maxLines) {
+          return lines.sublist(lines.length - maxLines).join('\n');
+        }
+      }
+
+      return const LineSplitter().convert(utf8.decode(buffer)).join('\n');
+    } finally {
+      await raf.close();
     }
-
-    final length = await file.length();
-    final start = length > _logTailBytes ? length - _logTailBytes : 0;
-    final rawTail = await file.openRead(start).transform(utf8.decoder).join();
-
-    final lines = const LineSplitter().convert(rawTail);
-    if (lines.length <= maxLines) {
-      return lines.join('\n');
-    }
-
-    return lines.sublist(lines.length - maxLines).join('\n');
   }
 
   Response _healthcheckHandler(Request req) {
