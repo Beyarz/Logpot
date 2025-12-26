@@ -42,7 +42,11 @@ class Persistence {
   }
 
   void log(String data) {
-    _sink.writeln(data);
+    try {
+      _sink.writeln(data);
+    } catch (e) {
+      print('Log write failed: $e');
+    }
   }
 
   Future<void> close() async {
