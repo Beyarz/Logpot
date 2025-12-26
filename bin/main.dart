@@ -115,18 +115,16 @@ Future<void> main() async {
 }
 
 Middleware _requestBodySizeLimitMiddleware(int maxBytes) {
-  return (Handler innerHandler) {
-    return (Request request) async {
-      if (request.contentLength != null && request.contentLength! > maxBytes) {
-        return Response(
-          payloadTooLargeError,
-          body: 'Request body too large',
-          headers: {'Content-Type': 'text/plain'},
-        );
-      }
+  return (innerHandler) => (request) async {
+    if (request.contentLength != null && request.contentLength! > maxBytes) {
+      return Response(
+        payloadTooLargeError,
+        body: 'Request body too large',
+        headers: {'Content-Type': 'text/plain'},
+      );
+    }
 
-      return innerHandler(request);
-    };
+    return innerHandler(request);
   };
 }
 
