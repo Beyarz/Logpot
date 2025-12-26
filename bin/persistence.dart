@@ -55,13 +55,19 @@ class Persistence {
     if (_reopening) return;
     _reopening = true;
 
-    await _sink.flush();
-    await _sink.close();
+    try {
+      await _sink.flush();
+      await _sink.close();
 
-    final file = File(_path);
-    await file.create(recursive: true);
-    _sink = file.openWrite(mode: FileMode.append);
-
-    _reopening = false;
+      final file = File(_path);
+      await file.create(recursive: true);
+      _sink = file.openWrite(mode: FileMode.append);
+    } catch (e) {
+      // If reopening fails, not much can do
+      // continue with old sink or ignore
+      print('Error reopening log file: $e');
+    } finally {
+      _reopening = false;
+    }
   }
 }
