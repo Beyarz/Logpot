@@ -9,9 +9,9 @@ import 'route.dart';
 import 'log.dart';
 import 'persistence.dart';
 
-const logFileName = 'request-logs.txt';
-const errorLogFileName = 'error-logs.txt';
-const exitSuccess = 0;
+const String logFileName = 'request-logs.txt';
+const String errorLogFileName = 'error-logs.txt';
+const int exitSuccess = 0;
 const int payloadTooLargeError = 413;
 const int maxRequestBodySize = 10 * 1024 * 1024; // 10MB
 
