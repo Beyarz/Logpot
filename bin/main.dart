@@ -29,7 +29,9 @@ Future<void> main() async {
       .addMiddleware(
         (innerHandler) => (request) {
           if (request.requestedUri.path != '/') {
-            log.info('${request.method},${request.requestedUri.path}');
+            final method = Uri.encodeComponent(request.method);
+            final path = Uri.encodeComponent(request.requestedUri.path);
+            log.info('$method,$path');
           }
 
           return innerHandler(request);

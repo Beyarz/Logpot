@@ -40,8 +40,22 @@ class RouteHandler {
     final buffer =
         StringBuffer()
           ..writeln('People and bots have visited following pages:\n')
-          ..writeln('Level,DateTime,Method,Path\n')
-          ..write(logTail);
+          ..writeln('Level,DateTime,Method,Path\n');
+
+    for (final line in logTail.split('\n')) {
+      if (line.isEmpty) continue;
+
+      final parts = line.split(',');
+
+      if (parts.length >= 4) {
+        final decoded =
+            '${parts[0]},${parts[1]},${Uri.decodeComponent(parts[2])},${Uri.decodeComponent(parts[3])}';
+
+        buffer.writeln(decoded);
+      } else {
+        buffer.writeln(line);
+      }
+    }
 
     return Response.ok(
       buffer.toString(),
