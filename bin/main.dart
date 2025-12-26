@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
+import 'package:shelf_limiter/shelf_limiter.dart';
 import 'package:logging/logging.dart';
 
 import 'route.dart';
@@ -11,6 +12,8 @@ import 'persistence.dart';
 const logFileName = 'request-logs.txt';
 const errorLogFileName = 'error-logs.txt';
 const exitSuccess = 0;
+const int payloadTooLargeError = 413;
+const int maxRequestBodySize = 10 * 1024 * 1024; // 10MB
 
 Future<void> main() async {
   final Log loggerConfig = Log("Global");
@@ -25,7 +28,28 @@ Future<void> main() async {
   loggerConfig.addErrorOutput(errorPersistence.log);
 
   final routeHandler = RouteHandler();
+  await routeHandler.init();
+
+  final rateLimiter = shelfLimiterByEndpoint(
+    endpointLimits: {
+      '/': RateLimiterOptions(
+        maxRequests: 30,
+        windowSize: const Duration(minutes: 1),
+      ),
+      '/healthcheck': RateLimiterOptions(
+        maxRequests: 60,
+        windowSize: const Duration(minutes: 1),
+      ),
+    },
+    defaultOptions: RateLimiterOptions(
+      maxRequests: 100,
+      windowSize: const Duration(minutes: 1),
+    ),
+  );
+
   final Handler handler = Pipeline()
+      .addMiddleware(_requestBodySizeLimitMiddleware(maxRequestBodySize))
+      .addMiddleware(rateLimiter)
       .addMiddleware(
         (innerHandler) => (request) {
           if (request.requestedUri.path != '/') {
@@ -59,6 +83,7 @@ Future<void> main() async {
       .addHandler(routeHandler.router.call);
 
   final int port = int.parse(Platform.environment['PORT'] ?? '8081');
+
   final HttpServer serverv4 = await serve(
       handler,
       InternetAddress.anyIPv4,
@@ -87,6 +112,22 @@ Future<void> main() async {
   http://${serverv4.address.address}:${serverv4.port}
   http://${serverv6.address.address}:${serverv6.port}
 """);
+}
+
+Middleware _requestBodySizeLimitMiddleware(int maxBytes) {
+  return (Handler innerHandler) {
+    return (Request request) async {
+      if (request.contentLength != null && request.contentLength! > maxBytes) {
+        return Response(
+          payloadTooLargeError,
+          body: 'Request body too large',
+          headers: {'Content-Type': 'text/plain'},
+        );
+      }
+
+      return innerHandler(request);
+    };
+  };
 }
 
 void registerSignalHandler(Future<void> Function() onSignal) {

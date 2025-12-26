@@ -10,13 +10,17 @@ class RouteHandler {
   static const int _maxLinesToRead = 50;
   static const int _chunkSize = 16 * 1024; // 16KB per iter
   static const int _maxBytes = 256 * 1024; // cap total work 256KB
+  static const Duration _cacheExpiry = Duration(seconds: 5);
 
   final String _robotsTxtFile = 'robots.txt';
   late final String _cacheRobotsTxt;
   late final Router _router;
 
-  RouteHandler() {
-    _initRobotsCache();
+  String? _cachedHomePage;
+  DateTime? _cacheTime;
+
+  Future<void> init() async {
+    await _initRobotsCache();
 
     _router =
         Router()
@@ -35,12 +39,21 @@ class RouteHandler {
   Router get router => _router;
 
   Future<Response> _homeHandler(Request req) async {
+    if (_cachedHomePage != null &&
+        _cacheTime != null &&
+        DateTime.now().difference(_cacheTime!) < _cacheExpiry) {
+      return Response.ok(
+        _cachedHomePage!,
+        headers: {'Cache-Control': 'no-store'},
+      );
+    }
+
     final logTail = await _readLogTail();
 
     final buffer =
         StringBuffer()
           ..writeln('People and bots have visited following pages:\n')
-          ..writeln('Level,DateTime,Method,Path\n');
+          ..writeln('Level,DateTime,Method,Path');
 
     for (final line in logTail.split('\n')) {
       if (line.isEmpty) continue;
@@ -48,17 +61,33 @@ class RouteHandler {
       final parts = line.split(',');
 
       if (parts.length >= 4) {
-        final decoded =
-            '${parts[0]},${parts[1]},${Uri.decodeComponent(parts[2])},${Uri.decodeComponent(parts[3])}';
+        String method = parts[2];
+        String path = parts[3];
 
+        try {
+          method = Uri.decodeComponent(method);
+        } catch (_) {
+          // Keep encoded if decoding fails
+        }
+
+        try {
+          path = Uri.decodeComponent(path);
+        } catch (_) {
+          // Keep encoded if decoding fails
+        }
+
+        final decoded = '${parts[0]},${parts[1]},$method,$path';
         buffer.writeln(decoded);
       } else {
         buffer.writeln(line);
       }
     }
 
+    _cachedHomePage = buffer.toString();
+    _cacheTime = DateTime.now();
+
     return Response.ok(
-      buffer.toString(),
+      _cachedHomePage!,
       headers: {'Cache-Control': 'no-store'},
     );
   }
@@ -96,10 +125,10 @@ class RouteHandler {
   }
 
   Response _catchAllHandler(Request req) {
-    return Response.ok('Nothing to see here');
+    return Response.ok('Thanks for visiting!\n\nNot much to see here.');
   }
 
-  void _initRobotsCache() {
-    _cacheRobotsTxt = File(_robotsTxtFile).readAsStringSync();
+  Future<void> _initRobotsCache() async {
+    _cacheRobotsTxt = await File(_robotsTxtFile).readAsString();
   }
 }
