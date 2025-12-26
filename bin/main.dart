@@ -68,6 +68,10 @@ Future<void> main() async {
               'X-Content-Type-Options': 'nosniff',
               'Strict-Transport-Security':
                   'max-age=31536000; includeSubDomains',
+
+              // Prevent someone from bypass Request-body limit
+              // and streams gigabytes to exhaust
+              'Connection': 'close',
             },
           );
         },
