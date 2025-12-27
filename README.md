@@ -34,7 +34,7 @@ Running with container
 
 ```
 $ docker build . -t logpot
-$ docker run -it -p 8081:8080 logpot
+$ docker run -d -it -p 8081:8081 logpot
 
 Server listening on:
   https://localhost:8081
