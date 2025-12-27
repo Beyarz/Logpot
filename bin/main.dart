@@ -120,7 +120,7 @@ Future<void> main() async {
       .addHandler(routeHandler.router.call);
 
   final SecurityContext securityContext = createSecurityContext(logger: log);
-  final int port = int.parse(Platform.environment['PORT'] ?? '8081');
+  final int port = int.parse(Platform.environment['PORT'] ?? '8080');
 
   final HttpServer serverv4 =
       await HttpServer.bindSecure(

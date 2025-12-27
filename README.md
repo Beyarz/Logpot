@@ -20,8 +20,8 @@ Run
 $ build/main
 
 Server listening on:
-  http://0.0.0.0:8081
-  http://:::8081
+  http://0.0.0.0:8080
+  http://:::8080
 ```
 
 ## Running with Dart
@@ -30,24 +30,24 @@ Server listening on:
 $ dart run
 
 Server listening on:
-  http://0.0.0.0:8081
-  http://:::8081
+  http://0.0.0.0:8080
+  http://:::8080
 ```
 
 ## Running with Docker
 
 ```
 $ docker build . -t logpot
-$ docker run -it -p 8080:8081 logpot
+$ docker run -it -p 8081:8080 logpot
 
 Server listening on:
-  http://0.0.0.0:8081
-  http://:::8081
+  http://0.0.0.0:8080
+  http://:::8080
 ```
 
 And then from a second terminal:
 ```
-$ curl http://0.0.0.0:8081
+$ curl http://0.0.0.0:8080
 Hello, World!
 ```
 
