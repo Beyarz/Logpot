@@ -8,10 +8,14 @@ import 'package:logging/logging.dart';
 import 'route.dart';
 import 'log.dart';
 import 'persistence.dart';
+import 'context.dart';
 
 const String logFileName = 'request-logs.txt';
 const String errorLogFileName = 'error-logs.txt';
+const String certPath = 'certs/cert.pem';
+const String keyPath = 'certs/key.pem';
 const int exitSuccess = 0;
+const int exitFailure = 1;
 const int payloadTooLargeError = 413;
 const int maxRequestBodySize = 10 * 1024 * 1024; // 10MB
 
@@ -78,17 +82,29 @@ Future<void> main() async {
       )
       .addHandler(routeHandler.router.call);
 
+  final SecurityContext securityContext = createSecurityContext();
   final int port = int.parse(Platform.environment['PORT'] ?? '8081');
 
   final HttpServer serverv4 =
-      await serve(handler, InternetAddress.anyIPv4, port)
+      await HttpServer.bindSecure(
+          InternetAddress.anyIPv4,
+          port,
+          securityContext,
+        )
         ..autoCompress = true
         ..idleTimeout = const Duration(seconds: 10);
 
   final HttpServer serverv6 =
-      await serve(handler, InternetAddress.anyIPv6, port)
+      await HttpServer.bindSecure(
+          InternetAddress.anyIPv6,
+          port,
+          securityContext,
+        )
         ..autoCompress = true
         ..idleTimeout = const Duration(seconds: 10);
+
+  serveRequests(serverv4, handler);
+  serveRequests(serverv6, handler);
 
   registerSignalHandler(() async {
     print('Shutting down...');
@@ -101,8 +117,9 @@ Future<void> main() async {
 
   print("""
   \nServer listening on:
-  http://${serverv4.address.address}:${serverv4.port}
-  http://${serverv6.address.address}:${serverv6.port}
+  https://localhost:${serverv4.port}
+  https://${serverv4.address.address}:${serverv4.port}
+  https://${serverv6.address.address}:${serverv6.port}
 """);
 }
 
