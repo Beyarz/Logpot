@@ -66,6 +66,14 @@ Then on the other machine you will receive the tarball
 
 `tar -xzvf logpot-source-XXX.tar.gz`
 
+You also need to create following files in the same folder, these are the logs
+
+```
+touch /home/logpot/request-logs.txt
+touch /home/logpot/error-logs.txt
+touch /home/logpot/private-request-logs.txt
+```
+
 `docker build . -t logpot`
 
 ```
