@@ -18,17 +18,19 @@ Future<void> main() async {
   final Persistence persistence = await Persistence.createFile(
     logFileName,
     maxSizeBytes: maxLogFileSize,
+    logger: log,
   );
 
   final Persistence errorPersistence = await Persistence.createFile(
     errorLogFileName,
     maxSizeBytes: maxLogFileSize,
+    logger: log,
   );
 
   loggerConfig.addOutput(persistence.log);
   loggerConfig.addErrorOutput(errorPersistence.log);
 
-  final routeHandler = RouteHandler();
+  final routeHandler = RouteHandler(logger: log);
   await routeHandler.init();
 
   final rateLimiter = shelfLimiter(
@@ -79,7 +81,7 @@ Future<void> main() async {
       )
       .addHandler(routeHandler.router.call);
 
-  final SecurityContext securityContext = createSecurityContext();
+  final SecurityContext securityContext = createSecurityContext(logger: log);
   final int port = int.parse(Platform.environment['PORT'] ?? '8081');
 
   final HttpServer serverv4 =
@@ -102,15 +104,16 @@ Future<void> main() async {
 
   serveRequests(serverv4, handler);
   serveRequests(serverv6, handler);
-
-  registerSignalHandler(() async {
-    print('Shutting down...');
-    await serverv4.close(force: true);
-    await serverv6.close(force: true);
-    await loggerConfig.dispose();
-    await persistence.close();
-    await errorPersistence.close();
-  });
+  registerSignalHandler(
+    () => shutdown(
+      log,
+      serverv4,
+      serverv6,
+      loggerConfig,
+      persistence,
+      errorPersistence,
+    ),
+  );
 
   print("""
   \nServer listening on:
@@ -118,6 +121,9 @@ Future<void> main() async {
   https://${serverv4.address.address}:${serverv4.port}
   https://${serverv6.address.address}:${serverv6.port}
 """);
+
+  log.info("Testing");
+  log.severe("Testing");
 }
 
 Middleware _requestBodySizeLimitMiddleware(int maxBytes) {
@@ -147,12 +153,14 @@ Future<void> shutdown(
   Logger log,
   HttpServer serverv4,
   HttpServer serverv6,
+  Log loggerConfig,
   Persistence persistence,
   Persistence errorPersistence,
 ) async {
-  log.info('Shutting down...');
+  print('Shutting down...');
   await serverv4.close(force: true);
   await serverv6.close(force: true);
+  await loggerConfig.dispose();
   await persistence.close();
   await errorPersistence.close();
 }

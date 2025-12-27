@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:collection';
 
+import 'package:logging/logging.dart';
+
 import 'config.dart';
 
 class Persistence {
   final String _path;
   late IOSink _sink;
+  final Logger? _logger;
 
   StreamSubscription<FileSystemEvent>? _fileWatcher;
   bool _reopening = false;
@@ -16,14 +19,20 @@ class Persistence {
   final Queue<String> _pendingWrites = Queue<String>();
   bool _isRotating = false;
 
-  Persistence(String path, IOSink sink, {int maxSizeBytes = maxLogFileSize})
-    : _path = path,
-      _sink = sink,
-      _maxSizeBytes = maxSizeBytes;
+  Persistence(
+    String path,
+    IOSink sink, {
+    int maxSizeBytes = maxLogFileSize,
+    Logger? logger,
+  }) : _path = path,
+       _sink = sink,
+       _maxSizeBytes = maxSizeBytes,
+       _logger = logger;
 
   static Future<Persistence> createFile(
     String path, {
     int maxSizeBytes = maxLogFileSize,
+    Logger? logger,
   }) async {
     final file = File(path);
     await file.create(recursive: true);
@@ -33,6 +42,7 @@ class Persistence {
       file.absolute.path,
       sink,
       maxSizeBytes: maxSizeBytes,
+      logger: logger,
     );
     persistence._startWatcher();
     await persistence._initializeCurrentSize();
@@ -48,6 +58,7 @@ class Persistence {
         _currentSizeBytes = await file.length();
       }
     } catch (e) {
+      _logger?.warning('Failed to initialize current file size for $_path: $e');
       _currentSizeBytes = 0;
     }
   }
@@ -86,7 +97,7 @@ class Persistence {
         Timer.run(() => _rotateLog());
       }
     } catch (e) {
-      print('Log write failed: $e');
+      _logger?.severe('Log write failed: $e');
     }
   }
 
@@ -128,16 +139,17 @@ class Persistence {
 
       _currentSizeBytes = 0;
     } catch (e) {
-      print('Error rotating log file: $e');
+      _logger?.severe('Error rotating log file: $e');
 
       try {
         final file = File(_path);
         await file.create(recursive: true);
         _sink = file.openWrite(mode: FileMode.append);
         _currentSizeBytes = 0;
-      } catch (_) {
+      } catch (e) {
         // If we can't reopen
         // there's not much can do
+        _logger?.severe('Failed to reopen log file after rotation failure: $e');
       }
     } finally {
       _reopening = false;
@@ -164,7 +176,7 @@ class Persistence {
     } catch (e) {
       // If reopening fails, not much can do
       // continue with old sink or ignore
-      print('Error reopening log file: $e');
+      _logger?.severe('Error reopening log file: $e');
     } finally {
       _reopening = false;
     }

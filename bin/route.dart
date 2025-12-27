@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -9,10 +10,13 @@ import 'config.dart';
 class RouteHandler {
   late final String _cacheRobotsTxt;
   late final Router _router;
+  final Logger? _logger;
 
   String? _cachedHomePage;
   DateTime? _cacheTime;
   bool _isRefreshingCache = false;
+
+  RouteHandler({Logger? logger}) : _logger = logger;
 
   Future<void> init() async {
     await _initRobotsCache();
@@ -65,25 +69,27 @@ class RouteHandler {
       for (final line in logTail.split('\n')) {
         if (line.isEmpty) continue;
 
-        final parts = line.split(',');
-
-        if (parts.length >= 4) {
-          String method = parts[2];
-          String path = parts[3];
+        final segmentFromCSV = line.split(',');
+        if (segmentFromCSV.length >= 4) {
+          String method = segmentFromCSV[2];
+          String path = segmentFromCSV[3];
 
           try {
             method = Uri.decodeComponent(method);
-          } catch (_) {
+          } catch (e) {
             // Keep encoded if decoding fails
+            _logger?.warning('Failed to decode method URI component: $e');
           }
 
           try {
             path = Uri.decodeComponent(path);
-          } catch (_) {
+          } catch (e) {
             // Keep encoded if decoding fails
+            _logger?.warning('Failed to decode path URI component: $e');
           }
 
-          final decoded = '${parts[0]},${parts[1]},$method,$path';
+          final decoded =
+              '${segmentFromCSV[0]},${segmentFromCSV[1]},$method,$path';
           buffer.writeln(decoded);
         } else {
           buffer.writeln(line);
@@ -187,6 +193,7 @@ class RouteHandler {
     try {
       _cacheRobotsTxt = await File(robotsTxtFile).readAsString();
     } catch (e) {
+      _logger?.severe('Failed to read robots.txt file: $e');
       throw FileSystemException(
         'File "robots.txt" not found. Have to be in same directory.',
       );

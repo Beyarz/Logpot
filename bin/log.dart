@@ -33,6 +33,9 @@ class Log {
         final errorLog =
             '[$timestamp] Log ${subscriber.runtimeType} failed\nERROR: $err\nSTACK: $stack';
 
+        print(
+          'Internal logging error: $errorLog',
+        ); // Fallback for internal errors
         await _emitError(errorLog);
       }
     });
@@ -46,9 +49,10 @@ class Log {
     for (final sink in _errorOutputs) {
       try {
         await sink(message);
-      } catch (_) {
+      } catch (e) {
         // Nothing else I can do
         // I just want to avoid infinite recursion
+        print('Critical: Error output failed: $e');
       }
     }
   }
@@ -56,7 +60,14 @@ class Log {
   void _startListener() {
     _logger.onRecord.listen((record) {
       final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(record.time);
-      _fanOut.add('[${record.level.name}],$timestamp,${record.message}');
+      final formattedMessage =
+          '[${record.level.name}],$timestamp,${record.message}';
+
+      if (record.level == Level.INFO) {
+        _fanOut.add(formattedMessage);
+      } else {
+        _emitError(formattedMessage);
+      }
     });
   }
 
