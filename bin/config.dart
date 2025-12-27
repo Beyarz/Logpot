@@ -17,6 +17,7 @@ const Duration cacheExpiry = Duration(seconds: 5);
 
 const String logFileName = 'request-logs.txt';
 const String errorLogFileName = 'error-logs.txt';
+const String privateLogFileName = 'private-request-logs.txt';
 
 const String certPath = 'certs/cert.pem';
 const String keyPath = 'certs/key.pem';

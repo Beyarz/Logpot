@@ -7,6 +7,7 @@ typedef LogOutput = FutureOr<void> Function(String message);
 
 class Log {
   final StreamController<String> _fanOut = StreamController.broadcast();
+  final StreamController<String> _privateFanOut = StreamController.broadcast();
   final List<LogOutput> _errorOutputs = [];
   late final Logger _logger;
 
@@ -41,6 +42,31 @@ class Log {
     });
   }
 
+  void addPrivateOutput(LogOutput subscriber) {
+    late final StreamSubscription<String> subscription;
+
+    subscription = _privateFanOut.stream.listen((msg) async {
+      try {
+        await subscriber(msg);
+      } catch (err, stack) {
+        // Remove the broken sink
+        await subscription.cancel();
+
+        final timestamp = DateFormat(
+          'yyyy-MM-dd HH:mm:ss',
+        ).format(DateTime.now());
+
+        final errorLog =
+            '[$timestamp] Private log ${subscriber.runtimeType} failed\nERROR: $err\nSTACK: $stack';
+
+        print(
+          'Internal logging error: $errorLog',
+        ); // Fallback for internal errors
+        await _emitError(errorLog);
+      }
+    });
+  }
+
   void addErrorOutput(LogOutput subscriber) {
     _errorOutputs.add(subscriber);
   }
@@ -63,8 +89,10 @@ class Log {
       final formattedMessage =
           '[${record.level.name}],$timestamp,${record.message}';
 
-      if (record.level == Level.INFO) {
+      if (record.level == Level.SHOUT) {
         _fanOut.add(formattedMessage);
+      } else if (record.level == Level.INFO) {
+        _privateFanOut.add(formattedMessage);
       } else {
         _emitError(formattedMessage);
       }
@@ -73,6 +101,7 @@ class Log {
 
   Future<void> dispose() async {
     await _fanOut.close();
+    await _privateFanOut.close();
   }
 
   Logger get logger => _logger;

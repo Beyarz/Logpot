@@ -27,8 +27,15 @@ Future<void> main() async {
     logger: log,
   );
 
+  final Persistence privatePersistence = await Persistence.createFile(
+    privateLogFileName,
+    maxSizeBytes: maxLogFileSize,
+    logger: log,
+  );
+
   loggerConfig.addOutput(persistence.log);
   loggerConfig.addErrorOutput(errorPersistence.log);
+  loggerConfig.addPrivateOutput(privatePersistence.log);
 
   final routeHandler = RouteHandler(logger: log);
   await routeHandler.init();
@@ -45,12 +52,16 @@ Future<void> main() async {
           if (request.requestedUri.path != '/') {
             final method = Uri.encodeComponent(request.method);
             final path = Uri.encodeComponent(request.requestedUri.path);
+            final userAgent = request.headers['user-agent'] ?? 'No-Agent';
 
-            if (request.requestedUri.path == '/private') {
-              log.warning('$method,$path');
-            } else {
-              log.info('$method,$path');
+            final publicLogEntry = '$method,$path';
+            final privateLogEntry = '$method $path - User-Agent: $userAgent';
+
+            if (robotsTxtFile.contains(request.requestedUri.path)) {
+              log.info(privateLogEntry);
             }
+
+            log.shout(publicLogEntry);
           }
 
           return innerHandler(request);
@@ -112,6 +123,7 @@ Future<void> main() async {
       loggerConfig,
       persistence,
       errorPersistence,
+      privatePersistence,
     ),
   );
 
@@ -121,9 +133,6 @@ Future<void> main() async {
   https://${serverv4.address.address}:${serverv4.port}
   https://${serverv6.address.address}:${serverv6.port}
 """);
-
-  log.info("Testing");
-  log.severe("Testing");
 }
 
 Middleware _requestBodySizeLimitMiddleware(int maxBytes) {
@@ -156,6 +165,7 @@ Future<void> shutdown(
   Log loggerConfig,
   Persistence persistence,
   Persistence errorPersistence,
+  Persistence privatePersistence,
 ) async {
   print('Shutting down...');
   await serverv4.close(force: true);
@@ -163,4 +173,5 @@ Future<void> shutdown(
   await loggerConfig.dispose();
   await persistence.close();
   await errorPersistence.close();
+  await privatePersistence.close();
 }
