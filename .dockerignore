@@ -8,6 +8,7 @@ build/
 .idea/
 .packages
 *.pem
+*.tar.gz
 
 # Created by https://www.toptal.com/developers/gitignore/api/git,dart,visualstudiocode,macos,windows,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=git,dart,visualstudiocode,macos,windows,linux
