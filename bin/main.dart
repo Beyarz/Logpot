@@ -53,12 +53,39 @@ Future<void> main() async {
           if (request.requestedUri.path != '/') {
             final method = Uri.encodeComponent(request.method);
             final path = Uri.encodeComponent(request.requestedUri.path);
-            final userAgent = request.headers['user-agent'] ?? 'No-Agent';
-
             final publicLogEntry = '$method,$path';
-            final privateLogEntry = '$method $path - User-Agent: $userAgent';
 
-            if (robotsTxtFile.contains(request.requestedUri.path)) {
+            final userAgent = Uri.encodeComponent(
+              request.headers['user-agent'].toString(),
+            );
+            final timestamp = DateTime.now().toIso8601String();
+            final accept = Uri.encodeComponent(request.headers['accept'] ?? '');
+            final acceptLanguage = Uri.encodeComponent(
+              request.headers['accept-language'] ?? '',
+            );
+            final acceptEncoding = Uri.encodeComponent(
+              request.headers['accept-encoding'] ?? '',
+            );
+            final connection = Uri.encodeComponent(
+              request.headers['connection'] ?? '',
+            );
+            final referer = Uri.encodeComponent(
+              request.headers['referer'] ?? '',
+            );
+            final cacheControl = Uri.encodeComponent(
+              request.headers['cache-control'] ?? '',
+            );
+            final protocolVersion = request.protocolVersion;
+            final contentLength = request.contentLength?.toString() ?? '';
+            final queryString = Uri.encodeComponent(request.requestedUri.query);
+            final hasBody = (!request.isEmpty).toString();
+
+            final privateLogEntry =
+                '$publicLogEntry,$userAgent,$timestamp,$accept,$acceptLanguage,$acceptEncoding,$connection,$referer,$cacheControl,$protocolVersion,$contentLength,$queryString,$hasBody';
+
+            if (routeHandler.cacheRobotsTxt.contains(
+              request.requestedUri.path,
+            )) {
               log.info(privateLogEntry);
             }
 

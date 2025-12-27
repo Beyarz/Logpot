@@ -8,7 +8,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'config.dart';
 
 class RouteHandler {
-  late final String _cacheRobotsTxt;
+  late final String cacheRobotsTxt;
   late final Router _router;
   final Logger? _logger;
 
@@ -28,8 +28,14 @@ class RouteHandler {
           ..get(
             '/robots.txt',
             (Request req) => Response.ok(
-              _cacheRobotsTxt,
+              cacheRobotsTxt,
               headers: {'Cache-Control': 'public, max-age=3600'},
+            ),
+          )
+          ..get(
+            '/private',
+            (Request req) => Response.forbidden(
+              'Not cool, you were told to not visit this page.',
             ),
           )
           ..get('/<catchAll|.*>', _catchAllHandler);
@@ -191,7 +197,7 @@ class RouteHandler {
 
   Future<void> _initRobotsCache() async {
     try {
-      _cacheRobotsTxt = await File(robotsTxtFile).readAsString();
+      cacheRobotsTxt = await File(robotsTxtFile).readAsString();
     } catch (e) {
       _logger?.severe('Failed to read robots.txt file: $e');
       throw FileSystemException(
