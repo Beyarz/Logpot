@@ -9,7 +9,7 @@ import 'main.dart';
 class RouteHandler {
   static const int _maxLinesToRead = 50;
   static const int _chunkSize = 16 * 1024; // 16KB per iter
-  static const int _maxBytes = 256 * 1024; // cap total work 256KB
+  static const int _maxBytes = 64 * 1024; // cap total work 64KB
   static const Duration _cacheExpiry = Duration(seconds: 5);
 
   final String _robotsTxtFile = 'robots.txt';
