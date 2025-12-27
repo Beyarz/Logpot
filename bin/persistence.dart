@@ -16,17 +16,14 @@ class Persistence {
   final Queue<String> _pendingWrites = Queue<String>();
   bool _isRotating = false;
 
-  Persistence(
-    String path,
-    IOSink sink, {
-    int maxSizeBytes = defaultMaxSizeBytes,
-  }) : _path = path,
-       _sink = sink,
-       _maxSizeBytes = maxSizeBytes;
+  Persistence(String path, IOSink sink, {int maxSizeBytes = maxLogFileSize})
+    : _path = path,
+      _sink = sink,
+      _maxSizeBytes = maxSizeBytes;
 
   static Future<Persistence> createFile(
     String path, {
-    int maxSizeBytes = defaultMaxSizeBytes,
+    int maxSizeBytes = maxLogFileSize,
   }) async {
     final file = File(path);
     await file.create(recursive: true);

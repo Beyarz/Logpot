@@ -106,12 +106,11 @@ class RouteHandler {
     final allLines = <String>[];
     int totalBytesRead = 0;
 
-    // Read from current log file and all rotated files in reverse order
     final logFiles = await _getLogFilesInReverseOrder();
 
     for (final logFile in logFiles) {
       if (!await logFile.exists()) continue;
-      if (totalBytesRead >= maxBytes) break;
+      if (totalBytesRead >= maxReadBytes) break;
 
       final fileLines = await _readLogFileTail(
         logFile,
@@ -123,25 +122,25 @@ class RouteHandler {
       if (allLines.length >= maxLines) break;
     }
 
-    // Return only the most recent lines
+    // Only the most recent lines
     if (allLines.length > maxLines) {
       return allLines.sublist(allLines.length - maxLines).join('\n');
     }
+
     return allLines.join('\n');
   }
 
   Future<List<File>> _getLogFilesInReverseOrder() async {
     final files = <File>[];
 
-    // Add rotated files in reverse order (oldest first)
     for (int i = maxRotatedLogFiles; i >= 1; i--) {
       final rotatedFile = File('$logFileName.$i');
+
       if (await rotatedFile.exists()) {
         files.add(rotatedFile);
       }
     }
 
-    // Add current log file last (most recent)
     files.add(File(logFileName));
 
     return files;
@@ -156,7 +155,7 @@ class RouteHandler {
       int position = await raf.length();
       int bytesRead = 0;
 
-      while (position > 0 && bytesRead < maxBytes) {
+      while (position > 0 && bytesRead < maxReadBytes) {
         final readSize = position >= chunkSize ? chunkSize : position;
         position -= readSize;
         bytesRead += readSize;
