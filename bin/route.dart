@@ -4,15 +4,9 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-import 'main.dart';
+import 'config.dart';
 
 class RouteHandler {
-  static const int _maxLinesToRead = 50;
-  static const int _chunkSize = 16 * 1024; // 16KB per iter
-  static const int _maxBytes = 64 * 1024; // cap total work 64KB
-  static const Duration _cacheExpiry = Duration(seconds: 5);
-
-  final String _robotsTxtFile = 'robots.txt';
   late final String _cacheRobotsTxt;
   late final Router _router;
 
@@ -42,7 +36,7 @@ class RouteHandler {
   Future<Response> _homeHandler(Request req) async {
     if (_cachedHomePage != null &&
         _cacheTime != null &&
-        DateTime.now().difference(_cacheTime!) < _cacheExpiry) {
+        DateTime.now().difference(_cacheTime!) < cacheExpiry) {
       return Response.ok(
         _cachedHomePage!,
         headers: {'Cache-Control': 'no-store'},
@@ -108,29 +102,75 @@ class RouteHandler {
     }
   }
 
-  Future<String> _readLogTail({int maxLines = _maxLinesToRead}) async {
-    final file = File(logFileName);
-    if (!await file.exists()) return '';
+  Future<String> _readLogTail({int maxLines = maxLinesToRead}) async {
+    final allLines = <String>[];
+    int totalBytesRead = 0;
+
+    // Read from current log file and all rotated files in reverse order
+    final logFiles = await _getLogFilesInReverseOrder();
+
+    for (final logFile in logFiles) {
+      if (!await logFile.exists()) continue;
+      if (totalBytesRead >= maxBytes) break;
+
+      final fileLines = await _readLogFileTail(
+        logFile,
+        maxLines - allLines.length,
+      );
+      allLines.insertAll(0, fileLines);
+      totalBytesRead += fileLines.join('\n').length;
+
+      if (allLines.length >= maxLines) break;
+    }
+
+    // Return only the most recent lines
+    if (allLines.length > maxLines) {
+      return allLines.sublist(allLines.length - maxLines).join('\n');
+    }
+    return allLines.join('\n');
+  }
+
+  Future<List<File>> _getLogFilesInReverseOrder() async {
+    final files = <File>[];
+
+    // Add rotated files in reverse order (oldest first)
+    for (int i = maxRotatedLogFiles; i >= 1; i--) {
+      final rotatedFile = File('$logFileName.$i');
+      if (await rotatedFile.exists()) {
+        files.add(rotatedFile);
+      }
+    }
+
+    // Add current log file last (most recent)
+    files.add(File(logFileName));
+
+    return files;
+  }
+
+  Future<List<String>> _readLogFileTail(File file, int maxLines) async {
+    if (!await file.exists()) return [];
 
     final raf = await file.open();
     try {
       final List<int> buffer = [];
       int position = await raf.length();
+      int bytesRead = 0;
 
-      while (position > 0 && buffer.length < _maxBytes) {
-        final readSize = position >= _chunkSize ? _chunkSize : position;
+      while (position > 0 && bytesRead < maxBytes) {
+        final readSize = position >= chunkSize ? chunkSize : position;
         position -= readSize;
+        bytesRead += readSize;
 
         await raf.setPosition(position);
         buffer.insertAll(0, await raf.read(readSize));
 
         final lines = const LineSplitter().convert(utf8.decode(buffer));
         if (lines.length > maxLines) {
-          return lines.sublist(lines.length - maxLines).join('\n');
+          return lines.sublist(lines.length - maxLines);
         }
       }
 
-      return const LineSplitter().convert(utf8.decode(buffer)).join('\n');
+      return const LineSplitter().convert(utf8.decode(buffer));
     } finally {
       await raf.close();
     }
@@ -146,7 +186,7 @@ class RouteHandler {
 
   Future<void> _initRobotsCache() async {
     try {
-      _cacheRobotsTxt = await File(_robotsTxtFile).readAsString();
+      _cacheRobotsTxt = await File(robotsTxtFile).readAsString();
     } catch (e) {
       throw FileSystemException(
         'File "robots.txt" not found. Have to be in same directory.',

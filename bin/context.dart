@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'main.dart';
+import 'config.dart';
 
 SecurityContext createSecurityContext() {
   final SecurityContext context = SecurityContext();

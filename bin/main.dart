@@ -9,23 +9,20 @@ import 'route.dart';
 import 'log.dart';
 import 'persistence.dart';
 import 'context.dart';
-
-const String logFileName = 'request-logs.txt';
-const String errorLogFileName = 'error-logs.txt';
-const String certPath = 'certs/cert.pem';
-const String keyPath = 'certs/key.pem';
-const int exitSuccess = 0;
-const int exitFailure = 1;
-const int payloadTooLargeError = 413;
-const int maxRequestBodySize = 10 * 1024 * 1024; // 10MB
+import 'config.dart';
 
 Future<void> main() async {
   final Log loggerConfig = Log("Global");
   final Logger log = loggerConfig.logger;
 
-  final Persistence persistence = await Persistence.createFile(logFileName);
+  final Persistence persistence = await Persistence.createFile(
+    logFileName,
+    maxSizeBytes: maxLogFileSize,
+  );
+
   final Persistence errorPersistence = await Persistence.createFile(
     errorLogFileName,
+    maxSizeBytes: maxLogFileSize,
   );
 
   loggerConfig.addOutput(persistence.log);
