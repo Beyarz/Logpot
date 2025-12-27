@@ -1,14 +1,16 @@
-const int maxRotatedLogFiles = 5;
+// How many rows from the logfile to display
 const int maxLinesToRead = 50;
 
+// Read-write chunk buffer for storing logs and buffer size single op
 const int chunkSize = 16 * 1024; // 16KB
-const int maxBytes = 64 * 1024; // 16KB
+const int maxReadBytes = 64 * 1024; // 64KB
 
-const int defaultMaxLogFileSize = 10 * 1024 * 1024; // 10MB
+// Max size for incoming request body size (in case someone wants to be funny)
 const int maxRequestBodySize = 10 * 1024 * 1024; // 10MB
 
-const int defaultMaxSizeBytes = 64 * 1024 * 1024; // 64MB
+// Max size for each logfile before rotating
 const int maxLogFileSize = 64 * 1024 * 1024; // 64MB
+const int maxRotatedLogFiles = 5;
 
 const String robotsTxtFile = 'robots.txt';
 const Duration cacheExpiry = Duration(seconds: 5);
