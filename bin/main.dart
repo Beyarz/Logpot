@@ -78,10 +78,9 @@ Future<void> main() async {
             final protocolVersion = request.protocolVersion;
             final contentLength = request.contentLength?.toString() ?? '';
             final queryString = Uri.encodeComponent(request.requestedUri.query);
-            final hasBody = (!request.isEmpty).toString();
 
             final privateLogEntry =
-                '$publicLogEntry,$userAgent,$timestamp,$accept,$acceptLanguage,$acceptEncoding,$connection,$referer,$cacheControl,$protocolVersion,$contentLength,$queryString,$hasBody';
+                '$publicLogEntry,$userAgent,$timestamp,$accept,$acceptLanguage,$acceptEncoding,$connection,$referer,$cacheControl,$protocolVersion,$contentLength,$queryString';
 
             if (routeHandler.cacheRobotsTxt.contains(
               request.requestedUri.path,
