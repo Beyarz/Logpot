@@ -1,8 +1,19 @@
 # Logpot
 
+Endpoint for logging incoming requests for analytical purposes
+
 ## Prerequises
 
 Dart SDK version: 3.7.0
+
+## Setup
+
+Create ssl certificates and drop the `pem` files in folder `certs/`
+
+Name them after following
+
+- fullchain.pem
+- privkey.pem
 
 ## Build
 
