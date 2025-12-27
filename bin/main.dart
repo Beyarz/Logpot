@@ -122,7 +122,7 @@ Future<void> main() async {
   final SecurityContext securityContext = createSecurityContext(logger: log);
   final int port = int.parse(Platform.environment['PORT'] ?? '8080');
 
-  final HttpServer serverv4 =
+  final HttpServer server =
       await HttpServer.bindSecure(
           InternetAddress.anyIPv4,
           port,
@@ -131,22 +131,11 @@ Future<void> main() async {
         ..autoCompress = true
         ..idleTimeout = const Duration(seconds: 10);
 
-  final HttpServer serverv6 =
-      await HttpServer.bindSecure(
-          InternetAddress.anyIPv6,
-          port,
-          securityContext,
-        )
-        ..autoCompress = true
-        ..idleTimeout = const Duration(seconds: 10);
-
-  serveRequests(serverv4, handler);
-  serveRequests(serverv6, handler);
+  serveRequests(server, handler);
   registerSignalHandler(
     () => shutdown(
       log,
-      serverv4,
-      serverv6,
+      server,
       loggerConfig,
       persistence,
       errorPersistence,
@@ -156,9 +145,8 @@ Future<void> main() async {
 
   print("""
   \nServer listening on:
-  https://localhost:${serverv4.port}
-  https://${serverv4.address.address}:${serverv4.port}
-  https://${serverv6.address.address}:${serverv6.port}
+  https://localhost:${server.port}
+  https://${server.address.address}:${server.port}
 """);
 }
 

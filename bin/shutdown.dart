@@ -17,16 +17,14 @@ void registerSignalHandler(Future<void> Function() onSignal) {
 
 Future<void> shutdown(
   Logger log,
-  HttpServer serverv4,
-  HttpServer serverv6,
+  HttpServer server,
   Log loggerConfig,
   Persistence persistence,
   Persistence errorPersistence,
   Persistence privatePersistence,
 ) async {
   print('Shutting down...');
-  await serverv4.close(force: true);
-  await serverv6.close(force: true);
+  await server.close(force: true);
   await loggerConfig.dispose();
   await persistence.close();
   await errorPersistence.close();
