@@ -19,8 +19,8 @@ const String logFileName = 'request-logs.txt';
 const String errorLogFileName = 'error-logs.txt';
 const String privateLogFileName = 'private-request-logs.txt';
 
-const String certPath = 'certs/cert.pem';
-const String keyPath = 'certs/key.pem';
+const String certPath = 'certs/fullchain.pem';
+const String keyPath = 'certs/privkey.pem';
 
 const int exitSuccess = 0;
 const int exitFailure = 1;
