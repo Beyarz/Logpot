@@ -7,4 +7,4 @@ tar -czf logpot-source-${TIMESTAMP}.tar.gz \
     pubspec.yaml \
     pubspec.lock
 
-scp logpot-source-${TIMESTAMP}.tar.gz NAME@IP:/app
+scp logpot-source-${TIMESTAMP}.tar.gz USER@IP:/home/logpot

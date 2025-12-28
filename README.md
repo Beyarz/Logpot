@@ -66,20 +66,25 @@ Then on the other machine you will receive the tarball
 
 `tar -xzvf logpot-source-XXX.tar.gz`
 
-You also need to create following files in the same folder, these are the logs
-
-```
-touch /home/logpot/request-logs.txt
-touch /home/logpot/error-logs.txt
-touch /home/logpot/private-request-logs.txt
-```
+Build the container there
 
 `docker build . -t logpot`
 
+You must create the logs directory before running the container:
+
+```
+mkdir -p logs
+touch logs/request-logs.txt
+touch logs/error-logs.txt
+touch logs/private-request-logs.txt
+```
+
+Run
+
 ```
 docker run \
-  -v /home/logpot/request-logs.txt:/app/request-logs.txt \
-  -v /home/logpot/error-logs.txt:/app/error-logs.txt \
-  -v /home/logpot/private-request-logs.txt:/app/private-request-logs.txt \
+  -v ${PWD}/logs:/app/logs \
   -d -p 8081:8081 logpot
 ```
+
+The logs can be viewed at `/logs`

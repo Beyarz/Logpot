@@ -35,7 +35,17 @@ class Persistence {
     Logger? logger,
   }) async {
     final file = File(path);
-    await file.create(recursive: true);
+
+    if (!await file.exists()) {
+      try {
+        await file.create(recursive: false);
+      } catch (e) {
+        logger?.warning(
+          'Could not create file $path: $e. Trying to open anyway.',
+        );
+      }
+    }
+
     final sink = file.openWrite(mode: FileMode.append);
 
     final persistence = Persistence(
