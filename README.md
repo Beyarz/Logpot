@@ -2,6 +2,12 @@
 
 Endpoint for logging incoming requests for analytical purposes
 
+<hr>
+
+All incoming requests are logged in `logs/request-logs.txt`
+
+Requests for pages disallowed by `robots.txt` are recorded separately in `logs/private-request-logs.txt`, which includes additional details about the source of request
+
 ## Prerequises
 
 Dart SDK version: 3.7.0
