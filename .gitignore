@@ -2,6 +2,7 @@
 *-logs.txt
 *.pem
 *.tar.gz
+cache/
 
 # https://dart.dev/guides/libraries/private-files
 # Created by `dart pub`

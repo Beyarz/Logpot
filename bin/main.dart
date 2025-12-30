@@ -8,6 +8,7 @@ import 'package:logging/logging.dart';
 import 'route.dart';
 import 'log.dart';
 import 'persistence.dart';
+import 'responsecache.dart';
 import 'context.dart';
 import 'config.dart';
 import 'shutdown.dart';
@@ -39,9 +40,11 @@ Future<void> main() async {
   loggerConfig.addErrorOutput(errorPersistence.log);
   loggerConfig.addPrivateOutput(privatePersistence.log);
 
-  Hallucinate hallucinator = Hallucinate(
-    model: llmModel,
-    systemPrompt: '''
+  Hallucinate? hallucinator;
+  if (openaiApikey.isNotEmpty) {
+    hallucinator = Hallucinate(
+      model: llmModel,
+      systemPrompt: '''
     You are a webserver.
     You receive ONLY a path like "/.env" and respond with PLAINTEXT content that vulnerable page would contain.
     HALLUCINATE realistic fake for /.env show DB_PASSWORD=supersecret123, API_KEY=sk-abc123def, etc.
@@ -53,10 +56,25 @@ Future<void> main() async {
 
     Path:
     ''',
+      logger: log,
+    );
+    log.info('LLM hallucination enabled');
+  } else {
+    log.info('No API key provided, LLM hallucination disabled');
+  }
+
+  final responseCache = ResponseCache(
+    cacheFilePath: responseCacheFile,
+    maxEntries: maxCacheEntries,
     logger: log,
   );
+  await responseCache.init();
 
-  final routeHandler = RouteHandler(logger: log, hallucinate: hallucinator);
+  final routeHandler = RouteHandler(
+    logger: log,
+    hallucinate: hallucinator,
+    responseCache: responseCache,
+  );
   await routeHandler.init();
 
   final rateLimiter = shelfLimiter(
@@ -158,6 +176,7 @@ Future<void> main() async {
       persistence,
       errorPersistence,
       privatePersistence,
+      responseCache,
     ),
   );
 

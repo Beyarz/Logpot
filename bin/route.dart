@@ -7,20 +7,26 @@ import 'package:shelf_router/shelf_router.dart';
 
 import 'config.dart';
 import 'hallucinate.dart';
+import 'responsecache.dart';
 
 class RouteHandler {
   late final String cacheRobotsTxt;
   late final Router _router;
   final Logger? _logger;
   final Hallucinate? _hallucinate;
+  final ResponseCache? _responseCache;
 
   String? _cachedHomePage;
   DateTime? _cacheTime;
   bool _isRefreshingCache = false;
 
-  RouteHandler({Logger? logger, Hallucinate? hallucinate})
-    : _logger = logger,
-      _hallucinate = hallucinate;
+  RouteHandler({
+    Logger? logger,
+    Hallucinate? hallucinate,
+    ResponseCache? responseCache,
+  }) : _logger = logger,
+       _hallucinate = hallucinate,
+       _responseCache = responseCache;
 
   Future<void> init() async {
     await _initRobotsCache();
@@ -199,13 +205,29 @@ class RouteHandler {
   }
 
   Future<Response> _catchAllHandler(Request req) async {
+    final requestPath = req.requestedUri.path.toString();
+
+    if (_responseCache != null) {
+      final cachedResponse = _responseCache.get(requestPath);
+
+      if (cachedResponse != null) {
+        return Response.ok(
+          cachedResponse,
+          headers: {'Content-type': 'text/plain'},
+          encoding: Encoding.getByName('utf8'),
+        );
+      }
+    }
+
     if (_hallucinate != null) {
       try {
-        final hallucinatedContent = await _hallucinate.generate(
-          req.requestedUri.path.toString(),
-        );
+        final hallucinatedContent = await _hallucinate.generate(requestPath);
 
         if (hallucinatedContent != null) {
+          if (_responseCache != null) {
+            await _responseCache.put(requestPath, hallucinatedContent);
+          }
+
           return Response.ok(
             hallucinatedContent.toString(),
             headers: {'Content-type': 'text/plain'},
@@ -217,7 +239,7 @@ class RouteHandler {
       }
     }
 
-    return Response.ok('Thanks for visiting!\n\nNot much to see here.');
+    return Response.notFound('404 Not Found');
   }
 
   Future<void> _initRobotsCache() async {

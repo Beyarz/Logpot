@@ -12,9 +12,6 @@ class ResponseCache {
   final int _maxEntries;
   final Logger? _logger;
   final Map<String, CacheEntry> _cache = {};
-  // Don't want to save to often, it will wear out the storage
-  // If request keep coming, it will reset timer
-  static const int saveIntervalSec = 60;
   Timer? _saveTimer;
   bool _isSaving = false;
 
@@ -56,7 +53,7 @@ class ResponseCache {
     _cache[path] = entry;
 
     _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(seconds: saveIntervalSec), _saveToDisk);
+    _saveTimer = Timer(const Duration(seconds: cacheSaveDelaySec), _saveToDisk);
   }
 
   bool contains(String path) => _cache.containsKey(path);

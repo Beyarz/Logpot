@@ -82,10 +82,11 @@ Build the container there
 
 `docker build . -t logpot`
 
-You must create the logs directory before running the container:
+You must create the logs and cache directory before running the container:
 
-```
+```shell
 mkdir -p logs
+mkdir -p cache
 touch logs/request-logs.txt
 touch logs/error-logs.txt
 touch logs/private-request-logs.txt
@@ -96,6 +97,7 @@ Run
 ```
 docker run \
   -v ${PWD}/logs:/app/logs \
+  -v ${PWD}/cache:/app/cache \
   -d -p 8081:8081 logpot
 ```
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 
 import 'persistence.dart';
+import 'responsecache.dart';
 import 'log.dart';
 import 'config.dart';
 
@@ -22,6 +23,7 @@ Future<void> shutdown(
   Persistence persistence,
   Persistence errorPersistence,
   Persistence privatePersistence,
+  ResponseCache? responseCache,
 ) async {
   print('Shutting down...');
   await server.close(force: true);
@@ -29,4 +31,5 @@ Future<void> shutdown(
   await persistence.close();
   await errorPersistence.close();
   await privatePersistence.close();
+  await responseCache?.close();
 }

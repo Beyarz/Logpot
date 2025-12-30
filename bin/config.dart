@@ -15,6 +15,13 @@ const int maxRotatedLogFiles = 5;
 const String robotsTxtFile = 'robots.txt';
 const Duration cacheExpiry = Duration(seconds: 5);
 
+const String responseCacheFile = 'cache/response-cache.json';
+const int maxCacheEntries = 1000;
+// Don't want to save too often, it will wear out the storage
+// If request keep coming, it will reset timer
+// After this amount of time since last request, store to file
+const int cacheSaveDelaySec = 60;
+
 const String logFileName = 'logs/request-logs.txt';
 const String errorLogFileName = 'logs/error-logs.txt';
 const String privateLogFileName = 'logs/private-request-logs.txt';
@@ -32,4 +39,5 @@ const String llmModel = 'openai/gpt-oss-20b';
 
 const String openaiEndpoint = 'https://api.hyperbolic.xyz/v1/chat/completions';
 
+// Leave empty to disable LLM hallucination
 const String openaiApikey = '...';
