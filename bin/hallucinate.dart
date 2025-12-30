@@ -54,16 +54,13 @@ class Hallucinate {
       }
 
       final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      final choices = jsonResponse['choices'] as List?;
 
-      if (jsonResponse['choices'] != null &&
-          jsonResponse['choices'] is List &&
-          jsonResponse['choices'].isNotEmpty) {
-        final firstChoice = jsonResponse['choices'][0];
+      if (choices != null && choices.isNotEmpty) {
+        final firstChoice = choices[0] as Map<String, dynamic>;
+        final content = firstChoice['message']?['content'] as String?;
 
-        if (firstChoice['message'] != null &&
-            firstChoice['message']['content'] != null) {
-          final content = firstChoice['message']['content'] as String;
-          _logger?.info('Generated hallucinated content for: $userPrompt');
+        if (content != null) {
           return content;
         }
       }

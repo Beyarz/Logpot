@@ -21,6 +21,12 @@ Name them after following
 - fullchain.pem
 - privkey.pem
 
+Create certificates
+
+```shell
+$ openssl req -x509 -newkey rsa:4096 -keyout certs/privkey.pem -out certs/fullchain.pem -days 365 -nodes -subj "/CN=localhost"
+```
+
 ## Build
 
 For current machine
