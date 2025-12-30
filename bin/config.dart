@@ -26,3 +26,10 @@ const int exitSuccess = 0;
 const int exitFailure = 1;
 
 const int payloadTooLargeError = 413;
+const int httpOk = 200;
+
+const String llmModel = 'openai/gpt-oss-20b';
+
+const String openaiEndpoint = 'https://api.hyperbolic.xyz/v1/chat/completions';
+
+const String openaiApikey = '...';

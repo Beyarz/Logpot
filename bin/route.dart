@@ -6,17 +6,21 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'config.dart';
+import 'hallucinate.dart';
 
 class RouteHandler {
   late final String cacheRobotsTxt;
   late final Router _router;
   final Logger? _logger;
+  final Hallucinate? _hallucinate;
 
   String? _cachedHomePage;
   DateTime? _cacheTime;
   bool _isRefreshingCache = false;
 
-  RouteHandler({Logger? logger}) : _logger = logger;
+  RouteHandler({Logger? logger, Hallucinate? hallucinate})
+    : _logger = logger,
+      _hallucinate = hallucinate;
 
   Future<void> init() async {
     await _initRobotsCache();
@@ -38,7 +42,10 @@ class RouteHandler {
               'Not cool, you were told to not visit this page.',
             ),
           )
-          ..get('/<catchAll|.*>', _catchAllHandler);
+          ..get(
+            '/<catchAll|.*>',
+            (Request req) async => await _catchAllHandler(req),
+          );
   }
 
   Router get router => _router;
@@ -191,7 +198,25 @@ class RouteHandler {
     return Response.ok('Healthy');
   }
 
-  Response _catchAllHandler(Request req) {
+  Future<Response> _catchAllHandler(Request req) async {
+    if (_hallucinate != null) {
+      try {
+        final hallucinatedContent = await _hallucinate.generate(
+          req.requestedUri.path.toString(),
+        );
+
+        if (hallucinatedContent != null) {
+          return Response.ok(
+            hallucinatedContent.toString(),
+            headers: {'Content-type': 'text/plain'},
+            encoding: Encoding.getByName('utf8'),
+          );
+        }
+      } catch (e) {
+        _logger?.warning('Failed to generate hallucinated response: $e');
+      }
+    }
+
     return Response.ok('Thanks for visiting!\n\nNot much to see here.');
   }
 
